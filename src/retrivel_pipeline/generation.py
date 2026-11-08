@@ -9,8 +9,8 @@ PROMPT_TEMPLATE = """
 You are an expert on Indian Roads Congress (IRC) standards.
 
 Answer the user's question using ONLY the information provided below.
-If you use any fact, cite its source using [source], where the source
-is the file name or clause number available in the metadata.
+If you use any fact, cite its source using [Page N] when a page number is
+available in the metadata. Do not mention filenames or file extensions.
 
 If the provided context does not contain enough information to answer,
 clearly state that you could not find the required information.
@@ -33,12 +33,8 @@ def format_context(results: List[Dict[str, Any]]) -> str:
     for result in results:
         metadata = result["metadata"]
 
-        source = (
-            metadata.get("source")
-            or metadata.get("file_path")
-            or metadata.get("filename")
-            or "unknown"
-        )
+        page = metadata.get("page")
+        source = f"Page {int(page) + 1}" if isinstance(page, (int, float)) else "Relevant section"
 
         content = result["content"].replace("\n", " ").strip()
 

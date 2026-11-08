@@ -56,19 +56,12 @@ def answer_with_sources(question: str, top_k: int) -> tuple[str, list[dict]]:
 
 def render_source(result: dict, index: int) -> None:
     metadata = result.get("metadata") or {}
-    source = (
-        metadata.get("source")
-        or metadata.get("file_path")
-        or metadata.get("filename")
-        or "Unknown document"
-    )
     page = metadata.get("page")
-    page_label = f" - page {int(page) + 1}" if isinstance(page, (int, float)) else ""
+    page_label = f"Page {int(page) + 1}" if isinstance(page, (int, float)) else "Relevant section"
     distance = result.get("distance")
     score_label = f"{distance:.3f}" if isinstance(distance, (int, float)) else "n/a"
 
-    with st.expander(f"{index}. {Path(str(source)).name}{page_label} - distance {score_label}"):
-        st.caption(str(source))
+    with st.expander(f"{index}. {page_label} - relevance {score_label}"):
         st.write(result.get("content", ""))
 
 
@@ -88,7 +81,7 @@ def main() -> None:
             st.rerun()
 
         st.divider()
-        st.caption("Searching only: IRC_SP73.pdf")
+        st.caption("Searching the indexed IRC standards content")
 
         if not os.getenv("GROQ_API_KEY"):
             st.warning("Add GROQ_API_KEY to a .env file before asking a question.")
