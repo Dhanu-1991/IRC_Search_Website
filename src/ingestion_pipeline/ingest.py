@@ -13,7 +13,7 @@ from src.ingestion_pipeline.embedding import EmbeddingPipeline
 from src.ingestion_pipeline.vectorstore import VectorStore
 
 
-def main(data_dir: str = "data"):
+def main(data_dir: str = "data", reset: bool = False):
     # 1. Load documents
     print(f"\n=== Loading documents from '{data_dir}' ===")
 
@@ -42,6 +42,9 @@ def main(data_dir: str = "data"):
     print("\n=== Saving to ChromaDB vector store ===")
 
     store = VectorStore()
+    if reset:
+        print("Resetting the existing vector store...")
+        store.reset()
     store.add_documents(chunks, embeddings)
 
     # 5. Display ingestion summary

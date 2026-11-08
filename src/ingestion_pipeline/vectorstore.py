@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import numpy as np
 import chromadb
-import uuid
+import hashlib
 from typing import List, Any
 from sentence_transformers import SentenceTransformer
 from src.ingestion_pipeline.embedding import EmbeddingPipeline
@@ -64,6 +64,14 @@ class VectorStore:
             print(f"Error initializing vector store: {e}")
             raise
 
+    def reset(self):
+        """Replace the current collection with an empty collection."""
+        self.client.delete_collection(self.collection_name)
+        self.collection = self.client.get_or_create_collection(
+            name=self.collection_name,
+            metadata={"description": "PDF document embeddings for RAG"},
+        )
+
     def add_documents(self, documents: List[Any], embeddings: np.ndarray):
         """
         Add documents and their embeddings to the vector store
@@ -84,8 +92,9 @@ class VectorStore:
         embeddings_list = []
         
         for i, (doc, embedding) in enumerate(zip(documents, embeddings)):
-            # Generate unique ID
-            doc_id = f"doc_{uuid.uuid4().hex[:8]}_{i}"
+            source = str(doc.metadata.get("source", "unknown"))
+            identity = f"{source}|{doc.metadata.get('page', '')}|{doc.page_content}"
+            doc_id = f"doc_{hashlib.sha256(identity.encode('utf-8')).hexdigest()[:24]}"
             ids.append(doc_id)
             
             # Prepare metadata

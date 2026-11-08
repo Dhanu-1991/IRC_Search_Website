@@ -89,9 +89,18 @@ def main() -> None:
                 (data_dir / upload.name).write_bytes(upload.getvalue())
 
             with st.spinner("Extracting text and creating embeddings..."):
-                ingest_documents(str(data_dir))
+                # Rebuild from every PDF currently in data/ so replaced files
+                # cannot leave stale chunks in the collection.
+                ingest_documents(str(data_dir), reset=True)
                 get_retriever.clear()
-            st.success(f"Indexed {len(uploads)} document(s).")
+            st.session_state.messages = []
+            st.session_state.index_message = (
+                f"Indexed all PDFs currently stored ({len(list(data_dir.glob('*.pdf')))} document(s))."
+            )
+            st.rerun()
+
+        if st.session_state.get("index_message"):
+            st.success(st.session_state.pop("index_message"))
 
         if not os.getenv("GROQ_API_KEY"):
             st.warning("Add GROQ_API_KEY to a .env file before asking a question.")
