@@ -7,16 +7,19 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from src.ingestion_pipeline.ingest import main as ingest_documents
+from src.ingestion_pipeline.vectorstore import VectorStore
 from src.retrivel_pipeline.Groq_llm import GroqLLM
 from src.retrivel_pipeline.Retrieval import RetrievalEngine
 from src.retrivel_pipeline.generation import format_context, PROMPT_TEMPLATE
 
 
 ROOT_DIR = Path(__file__).resolve().parent
+FIXED_DOCUMENT_DIR = ROOT_DIR / "data" / "fixed_document"
+FIXED_DOCUMENT_PATH = FIXED_DOCUMENT_DIR / "IRC_SP73.pdf"
 load_dotenv(ROOT_DIR / ".env")
 
 st.set_page_config(
-    page_title="IRC Search Assistant",
+    page_title="IRC SP73 Search Assistant",
     page_icon="IRC",
     layout="wide",
 )
@@ -24,6 +27,15 @@ st.set_page_config(
 
 @st.cache_resource(show_spinner="Loading the IRC search engine...")
 def get_retriever() -> RetrievalEngine:
+    if not FIXED_DOCUMENT_PATH.exists():
+        raise FileNotFoundError(
+            f"The fixed document is missing: {FIXED_DOCUMENT_PATH}"
+        )
+
+    store = VectorStore()
+    if store.collection.count() == 0:
+        ingest_documents(str(FIXED_DOCUMENT_DIR), reset=True)
+
     return RetrievalEngine()
 
 
@@ -64,8 +76,8 @@ def main() -> None:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    st.title("IRC Search Assistant")
-    st.write("Ask questions about Indian Roads Congress standards using your indexed PDF documents.")
+    st.title("IRC SP73 Search Assistant")
+    st.write("Ask questions about the indexed IRC SP73 document.")
 
     with st.sidebar:
         st.header("Controls")
@@ -76,31 +88,7 @@ def main() -> None:
             st.rerun()
 
         st.divider()
-        st.header("Add IRC PDFs")
-        uploads = st.file_uploader(
-            "Upload one or more PDF documents",
-            type=["pdf"],
-            accept_multiple_files=True,
-        )
-        if uploads and st.button("Index uploaded documents", use_container_width=True):
-            data_dir = ROOT_DIR / "data"
-            data_dir.mkdir(exist_ok=True)
-            for upload in uploads:
-                (data_dir / upload.name).write_bytes(upload.getvalue())
-
-            with st.spinner("Extracting text and creating embeddings..."):
-                # Rebuild from every PDF currently in data/ so replaced files
-                # cannot leave stale chunks in the collection.
-                ingest_documents(str(data_dir), reset=True)
-                get_retriever.clear()
-            st.session_state.messages = []
-            st.session_state.index_message = (
-                f"Indexed all PDFs currently stored ({len(list(data_dir.glob('*.pdf')))} document(s))."
-            )
-            st.rerun()
-
-        if st.session_state.get("index_message"):
-            st.success(st.session_state.pop("index_message"))
+        st.caption("Searching only: IRC_SP73.pdf")
 
         if not os.getenv("GROQ_API_KEY"):
             st.warning("Add GROQ_API_KEY to a .env file before asking a question.")

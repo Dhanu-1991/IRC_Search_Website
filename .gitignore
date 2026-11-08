@@ -23,8 +23,11 @@ ENV/
 # ==========================================
 # 4. Data files and PDF documents
 # ==========================================
-data/
+data/*
 *.pdf
+!data/
+!data/fixed_document/
+!data/fixed_document/IRC_SP73.pdf
 *.csv
 *.xlsx
 *.xls
