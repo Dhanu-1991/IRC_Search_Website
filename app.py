@@ -19,7 +19,7 @@ FIXED_DOCUMENT_PATH = FIXED_DOCUMENT_DIR / "IRC_SP73.pdf"
 load_dotenv(ROOT_DIR / ".env")
 
 st.set_page_config(
-    page_title="IRC SP73 Search Assistant",
+    page_title="IRC Search Assistant",
     page_icon="IRC",
     layout="wide",
 )
@@ -69,8 +69,8 @@ def main() -> None:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    st.title("IRC SP73 Search Assistant")
-    st.write("Ask questions about the indexed IRC SP73 document.")
+    st.title("IRC Search Assistant")
+    st.write("Ask questions about the indexed IRC document.")
 
     with st.sidebar:
         st.header("Controls")
